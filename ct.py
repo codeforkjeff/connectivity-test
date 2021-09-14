@@ -1,5 +1,6 @@
 
 import datetime
+import logging
 import shutil
 import subprocess
 import sys
@@ -11,7 +12,7 @@ interval = 3
 acceptable_time = 4
 
 def start_ping():
-    print("Spawning ping...")
+    logging.info("Spawning ping...")
     proc = subprocess.Popen([ping_path, host, "-i", str(interval), "-D"], stdout=subprocess.PIPE, bufsize=0)
     return proc
 
@@ -19,6 +20,8 @@ ping_path = shutil.which("ping")
 
 last_timestamp = 0
 last_icmp_seq = None
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 proc = start_ping()
 
@@ -39,24 +42,24 @@ while proc.poll() is None:
         icmp_seq = int(icmp_seq)
 
         if last_icmp_seq and icmp_seq - last_icmp_seq != 1:
-            print(f"WARNING: lost a packet, skipped icmp_seq {last_icmp_seq + 1}")
+            logging.warn(f"lost a packet: last icmp_seq seen was {last_icmp_seq}, just received {icmp_seq}")
         last_icmp_seq = icmp_seq
 
         elapsed = timestamp - last_timestamp
         if last_timestamp and elapsed > acceptable_time:
-            print(f"{datetime.datetime.now()} {elapsed} seconds elapsed! Possible problem with connection")
+            logging.warn(f"{datetime.datetime.now()} {elapsed} seconds elapsed")
 
         last_timestamp = timestamp
     elif line.startswith("PING"):
         pass
     else:
-        print(f"Unrecognized ping output: {line.strip()}")
-        print("Killing ping process...")
+        logging.error(f"Unrecognized ping output: {line.strip()}")
+        logging.info("Killing ping process...")
         proc.kill()
         try:
             proc.wait(60)
         except subprocess.TimeoutExpired:
-            print("couldn't kill ping process. oh well.")
+            logging.error("couldn't kill ping process. oh well.")
         proc = start_ping()
 
-print("ping process exited unexpectedly.")
+logging.error("ping process exited unexpectedly.")
