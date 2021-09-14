@@ -42,7 +42,7 @@ while proc.poll() is None:
         icmp_seq = int(icmp_seq)
 
         if last_icmp_seq and icmp_seq - last_icmp_seq != 1:
-            logging.warn(f"lost a packet: last icmp_seq seen was {last_icmp_seq}, just received {icmp_seq}")
+            logging.warn(f"lost a packet: last icmp_seq received was {last_icmp_seq}, just received {icmp_seq}")
         last_icmp_seq = icmp_seq
 
         elapsed = timestamp - last_timestamp
