@@ -58,3 +58,5 @@ while proc.poll() is None:
         except subprocess.TimeoutExpired:
             print("couldn't kill ping process. oh well.")
         proc = start_ping()
+
+print("ping process exited unexpectedly.")
