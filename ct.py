@@ -47,7 +47,7 @@ while proc.poll() is None:
 
         elapsed = timestamp - last_timestamp
         if last_timestamp and elapsed > acceptable_time:
-            logging.warn(f"{datetime.datetime.now()} {elapsed} seconds elapsed")
+            logging.warn(f"{elapsed} seconds elapsed")
 
         last_timestamp = timestamp
     elif line.startswith("PING"):
