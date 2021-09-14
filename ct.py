@@ -10,12 +10,17 @@ host = "67.218.102.107"
 interval = 3
 acceptable_time = 4
 
-ping_path = shutil.which("ping")
+def start_ping():
+    print("Spawning ping...")
+    proc = subprocess.Popen([ping_path, host, "-i", str(interval), "-D"], stdout=subprocess.PIPE, bufsize=0)
+    return proc
 
-proc = subprocess.Popen([ping_path, host, "-i", str(interval), "-D"], stdout=subprocess.PIPE, bufsize=0)
+ping_path = shutil.which("ping")
 
 last_timestamp = 0
 last_icmp_seq = None
+
+proc = start_ping()
 
 while proc.poll() is None:
     line = proc.stdout.readline()
@@ -45,6 +50,11 @@ while proc.poll() is None:
     elif line.startswith("PING"):
         pass
     else:
-        # unrecognized line, print it
-        print(line.strip())
-        #sys.exit(1)
+        print(f"Unrecognized ping output: {line.strip()}")
+        print("Killing ping process...")
+        proc.kill()
+        try:
+            proc.wait(60)
+        except subprocess.TimeoutExpired:
+            print("couldn't kill ping process. oh well.")
+        proc = start_ping()
