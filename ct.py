@@ -12,7 +12,7 @@ interval = 3
 acceptable_time = 4
 
 def start_ping():
-    logging.info("Spawning ping...")
+    logging.info("Starting ping...")
     proc = subprocess.Popen([ping_path, host, "-i", str(interval), "-D"], stdout=subprocess.PIPE, bufsize=0)
     return proc
 
@@ -21,7 +21,7 @@ ping_path = shutil.which("ping")
 last_timestamp = 0
 last_icmp_seq = None
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 proc = start_ping()
 
@@ -29,7 +29,7 @@ while proc.poll() is None:
     line = proc.stdout.readline()
     line = line.decode('utf-8').strip()
 
-    #print(f"{line}")
+    logging.debug(f"{line}")
 
     if line.startswith("["):
         timestamp = line[line.index("[")+1:line.index("]")]
@@ -41,15 +41,21 @@ while proc.poll() is None:
         icmp_seq = line[pos:line.index(" ", pos)]
         icmp_seq = int(icmp_seq)
 
-        if last_icmp_seq and icmp_seq - last_icmp_seq != 1:
-            logging.warn(f"skipped a packet: last icmp_seq received was {last_icmp_seq}, just received {icmp_seq}")
+        if last_icmp_seq:
+            if icmp_seq - last_icmp_seq > 1:
+                logging.warning(f"possible lost packet(s): last icmp_seq received was {last_icmp_seq}, just received {icmp_seq}")
+            elif icmp_seq < last_icmp_seq:
+                logging.warning(f"out of order delivery: last icmp_seq received was {last_icmp_seq}, just received {icmp_seq}")
         last_icmp_seq = icmp_seq
 
-        elapsed = timestamp - last_timestamp
-        if last_timestamp and elapsed > acceptable_time:
-            logging.warn(f"{elapsed} seconds elapsed")
+        is_response = "time=" in line
 
-        last_timestamp = timestamp
+        if is_response:
+            elapsed = timestamp - last_timestamp
+            if last_timestamp and elapsed > acceptable_time:
+                logging.warning(f"{elapsed} seconds elapsed since last successful ping")
+            last_timestamp = timestamp
+
     elif line.startswith("PING"):
         pass
     else:
