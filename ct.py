@@ -4,6 +4,7 @@ import logging
 import shutil
 import subprocess
 import sys
+import time
 
 # 67.218.102.107 = first hop after wifi router
 host = "67.218.102.107"
@@ -13,7 +14,7 @@ acceptable_time = 4
 
 def start_ping():
     logging.info("Starting ping...")
-    proc = subprocess.Popen([ping_path, host, "-i", str(interval), "-D"], stdout=subprocess.PIPE, bufsize=0)
+    proc = subprocess.Popen([ping_path, host, "-i", str(interval)], stdout=subprocess.PIPE, bufsize=0)
     return proc
 
 ping_path = shutil.which("ping")
@@ -31,10 +32,8 @@ while proc.poll() is None:
 
     logging.debug(f"{line}")
 
-    if line.startswith("["):
-        timestamp = line[line.index("[")+1:line.index("]")]
-        timestamp = timestamp[:timestamp.index(".")]
-        timestamp = int(timestamp)
+    if "icmp" in line:
+        timestamp = int(time.time())
 
         icmp_str = "icmp_seq="
         pos = line.index(icmp_str) + len(icmp_str)
