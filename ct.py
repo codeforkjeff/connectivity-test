@@ -21,7 +21,10 @@ def get_timestamp():
     return int(time.time())
 
 
-def loop_forever(host, interval, threshold):
+def loop_forever(host, interval, threshold, report_frequency):
+    """
+    report_frequency = in minutes
+    """
 
     last_timestamp = 0
     last_icmp_seq = None
@@ -30,8 +33,6 @@ def loop_forever(host, interval, threshold):
     lost_packets = 0
 
     report_last = get_timestamp()
-    # in seconds
-    report_frequency = 600
 
     proc = start_ping(host, interval)
 
@@ -68,9 +69,12 @@ def loop_forever(host, interval, threshold):
 
             total_packets += 1
 
-            if timestamp - report_last > report_frequency:
-                logging.info(f"Packet loss: { lost_packets / total_packets * 100}%")
+            if timestamp - report_last > (report_frequency*60):
+                pct = round(lost_packets / total_packets * 100, 2)
+                logging.info(f"Packet loss (last {report_frequency} mins): {pct}%")
                 report_last = get_timestamp()
+                total_packets = 0
+                lost_packets = 0
 
         elif line.startswith("PING"):
             pass
@@ -97,11 +101,13 @@ def main():
                         help='ping interval in seconds (default: 3s)')
     parser.add_argument('-t', dest='threshold', action='store', type=int, default=4,
                         help='show warning when time elapsed since last packet exceeds this value (default: 4s)')
+    parser.add_argument('-f', dest='report_frequency', action='store', type=int, default=15,
+                        help='report frequency in minutes (default: 15)')
 
     args = parser.parse_args()
 
     try:
-        loop_forever(args.host, args.interval, args.threshold)
+        loop_forever(args.host, args.interval, args.threshold, args.report_frequency)
     except KeyboardInterrupt:
         pass
 
