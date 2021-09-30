@@ -111,7 +111,8 @@ def loop_forever(host, interval, threshold, report_frequency):
 
                 total_packets += 1
 
-            elif line.startswith("PING"):
+            elif line.startswith("PING") or line.startswith("rtt") or "packet loss" in line or "statistics" in line:
+                # ignore these
                 pass
             else:
                 logging.error(f"Unrecognized ping output: {line.strip()}")
