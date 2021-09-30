@@ -1,11 +1,16 @@
 
+import sys
+
+if sys.version_info[0] < 3:
+    print("This script requires Python version 3")
+    sys.exit(1)
+
 import argparse
 import datetime
 import logging
 import queue
 import shutil
 import subprocess
-import sys
 import threading
 import time
 
