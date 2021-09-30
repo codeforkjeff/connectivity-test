@@ -64,8 +64,8 @@ def loop_forever(host, interval, threshold, report_frequency):
         #### check if we need to start/restart ping
 
         if proc is None or proc.poll() is not None:
-            logging.debug("Killing ping process...")
             if proc:
+                logging.debug("Killing ping process...")
                 proc.kill()
                 try:
                     proc.wait(60)
@@ -142,7 +142,6 @@ def loop_forever(host, interval, threshold, report_frequency):
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
     parser = argparse.ArgumentParser(description='Connectivity test')
     parser.add_argument('host', metavar='host', type=str,
@@ -153,8 +152,12 @@ def main():
                         help='show warning when time elapsed since last packet exceeds this value (default: 4s)')
     parser.add_argument('-f', dest='report_frequency', action='store', type=int, default=15,
                         help='report frequency in minutes (default: 15)')
+    parser.add_argument('-d', dest='debug', action='store_true',
+                        help='display debug logging')
 
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
     try:
         loop_forever(args.host, args.interval, args.threshold, args.report_frequency)
