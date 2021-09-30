@@ -21,11 +21,13 @@ def read_pipe(proc, fileobj, queue):
     for line in iter(fileobj.readline, b''):
         line = line.decode('utf-8').strip()
         queue.put(line)
+    fileobj.close()
     logging.debug(f"exiting reader thread")
 
 
 def start_ping(host, interval, stdout_queue, stderr_queue):
     logging.debug("Starting ping...")
+    # use -c so icmp_seq never wraps around after reaching 65535
     proc = subprocess.Popen([ping_path, host, "-i", str(interval), "-c", "1024"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)#, close_fds=True)
     t = threading.Thread(target=read_pipe, args=(proc, proc.stdout, stdout_queue))
     t.daemon = True
